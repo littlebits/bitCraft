@@ -1,0 +1,16 @@
+[
+    {
+        "modid": "lbcm",
+        "name": "bitCraft",
+        "description": "Brings redstone into the physical world using littleBits",
+        "version": "${version}",
+        "mcversion": "${mcversion}",
+        "url": "http://littlebits.cc",
+        "updateUrl": "http://littlebits.cc",
+        "authorList": ["stanBits", "sssyed"],
+        "credits": "Made with tons of community help",
+        "logoFile": "",
+        "screenshots": [],
+        "dependencies": ["mod_MinecraftForge"]
+    }
+]
