@@ -50,7 +50,7 @@ If you find a bug or issue, here's how to report it:
 	For Linux/Mac OS
 		./gradlew genIntellijruns
 
-### license
+### License
 Copyright 2015 littleBits Electronics.
 
 littleBits, littleBits logo, Bits, cloudBit, are trademarks of littleBits Electronic Inc.
@@ -60,3 +60,8 @@ littleBits Electronics, Inc. supports the Open Source Hardware Statement of Prin
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License at http://www.gnu.org/licenses/ for more details.
+
+### Modpack Inclusion
+Want to use bitCraft in a mod pack? Go right ahead! bitCraft is released under the GPL v3 license, so you're legally granted the rights to redistribute my mods as long as you retain the license information and let players know where they can find the mod's source.
+
+If you do choose to include it in a modpack, please tell us, we're curious!
