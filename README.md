@@ -29,7 +29,7 @@ If you find a bug or issue, here's how to report it:
 
 ### Setting Up the Development Environment
 
-- Make sure you have [JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) and [Gradle](http://gradle.org/gradle-download/) installed.
+- Make sure you have [JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) installed.
 - Clone your fork repo and make sure your have the latest changes available here (_upstream_).
 - Extract the contents of `forge/forge-1.7.10-10.13.3.1388-1.7.10-src.zip` into the folder `code`. Do not overwrite the `code/src` or `code/build.gradle` files.
 - From the `code` folder, run the command:
