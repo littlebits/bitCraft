@@ -1,40 +1,39 @@
 package cc.littleBits.cloudmod.url;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.io.IOUtils;
 
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
 import cc.littleBits.cloudmod.guis.GuiCloudSetup;
 
-class LbcmContentHandler extends AbstractHandler{
+class LbcmContentHandler implements HttpHandler{
 	GuiCloudSetup gui;
 	
 	public LbcmContentHandler(GuiCloudSetup newGui) {
 		super();
 		gui = newGui;
 	}
-	
-    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException{
-    	if(request.getMethod() == "POST") {
-        	String token = request.getReader().readLine().substring(6);
-        	gui.setAuth(token);
-        }
-    	try {
-    		response.setContentType("text/html;charset=utf-8");
-    		response.setStatus(HttpServletResponse.SC_OK);
-    		baseRequest.setHandled(true);
-    		response.addHeader("Access-Control-Allow-Origin", "*");
-    		response.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    		response.addHeader("Access-Control-Allow-Headers", "Content-Type");
-    		response.addHeader("Access-Control-Max-Age", "86400");
-    	} catch(Exception  e) {
-    		System.out.println("response exception :(");
-    	}
-    }
+
+	@Override
+	public void handle(HttpExchange t) throws IOException {
+		t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+		t.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
+		t.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+		t.getResponseHeaders().set("Access-Control-Max-Age", "86400");
+		
+		if(t.getRequestMethod().equals("POST")) {
+			String token = IOUtils.toString(t.getRequestBody(), "UTF-8").substring(6);
+			gui.setAuth(token);
+		}
+
+		String response = "OK";
+        t.sendResponseHeaders(200, response.length());
+        OutputStream os = t.getResponseBody();
+        os.write(response.getBytes());
+        os.close();
+	}
 }

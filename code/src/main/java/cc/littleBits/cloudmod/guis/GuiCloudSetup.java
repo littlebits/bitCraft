@@ -8,6 +8,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -105,6 +106,7 @@ public class GuiCloudSetup extends GuiScreen {
 		     httpclient.start();
 		     final HttpGet nameReq = new HttpGet("https://api-http.littlebitscloud.cc/v3/devices");
 		     nameReq.addHeader("Authorization", "Bearer "+authToken);
+		     nameReq.addHeader("User-Agent","bitCraft-0.1.4");
 		     httpclient.execute(nameReq, new FutureAccountDevList<HttpResponse>(this));
 		 }
 		 else {
@@ -119,6 +121,7 @@ public class GuiCloudSetup extends GuiScreen {
 				    httpclient.start();
 				    final HttpGet nameReq = new HttpGet("https://api-http.littlebitscloud.cc/v3/devices");
 				    nameReq.addHeader("Authorization", "Bearer "+authToken);
+				    nameReq.addHeader("User-Agent","bitCraft-0.1.4");
 				    httpclient.execute(nameReq, new FutureAccountDevList<HttpResponse>(this));
 				    
 				    guiMode = 2;
@@ -219,6 +222,7 @@ public class GuiCloudSetup extends GuiScreen {
 				        httpclient.start();
 				        final HttpGet nameReq = new HttpGet("https://api-http.littlebitscloud.cc/v3/devices");
 				        nameReq.addHeader("Authorization", "Bearer "+authToken);
+				        nameReq.addHeader("User-Agent","bitCraft-0.1.4");
 				        httpclient.execute(nameReq, new FutureAccountDevList<HttpResponse>(this));
 					}
 					else {
@@ -361,10 +365,35 @@ public class GuiCloudSetup extends GuiScreen {
 		 		
 		 		if(Desktop.isDesktopSupported()) {
 		 		  try {
+		 			System.out.println("Tried to open browser");
 		 			Desktop.getDesktop().browse(new URI("http://littlebits.cc/auth/minecraft"));
 		 		  } catch (Exception e) {
 		 			  e.printStackTrace();
 		 		  }
+		 		}
+		 		else {
+		 			Runtime runtime = Runtime.getRuntime();
+		 			String os = System.getProperty("os.name").toLowerCase();
+		 			String url = "http://littlebits.cc/auth/minecraft";
+		 			
+		 			try {
+		 				System.out.println("Try direct call...");
+		 				if(os.indexOf("nix")>=0 || os.indexOf("nux")>=0) {
+		 					runtime.exec("xdg-open " + url);
+		 				}
+		 				else if(os.indexOf("win")>=0) {
+		 					runtime.exec("rundll32 url.dll,FileProtocolHandler " + url);
+		 				}
+		 				else if(os.indexOf("mac")>=0) {
+		 					runtime.exec("open " + url);
+		 				}
+		 				else {
+		 					System.out.println("no dice :(");
+		 				}
+		 			}
+		 			catch (IOException ioe) {
+		 				ioe.printStackTrace();
+		 			}
 		 		}
 		 		
 		 		// Launch server listening for client ID from LB Server
@@ -373,7 +402,7 @@ public class GuiCloudSetup extends GuiScreen {
 				}
 				try {
 					server.startServer(this);
-				} catch(Exception e) {
+				} catch(Throwable e) {
 					e.printStackTrace();
 				}
 				
@@ -423,6 +452,7 @@ public class GuiCloudSetup extends GuiScreen {
 	     httpclient.start();
 	     final HttpGet nameReq = new HttpGet("https://api-http.littlebitscloud.cc/v3/devices");
 	     nameReq.addHeader("Authorization", "Bearer "+authToken);
+	     nameReq.addHeader("User-Agent","bitCraft-0.1.4");
 	     httpclient.execute(nameReq, new FutureTestAuthToken<HttpResponse>(this));
 	 }
 	 

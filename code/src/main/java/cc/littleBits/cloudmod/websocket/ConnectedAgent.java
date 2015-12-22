@@ -1,10 +1,13 @@
 package cc.littleBits.cloudmod.websocket;
 
 import java.net.URI;
+import java.util.HashMap;
 
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+
+import org.java_websocket.WebSocketFactory;
+import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
 
 import cc.littleBits.cloudmod.tileentities.TileEntityCloud;
 import net.minecraft.server.MinecraftServer;
@@ -18,17 +21,19 @@ public class ConnectedAgent {
 	public ConnectedAgent(TileEntityCloud t) {
 		te = t;
 		
-		socketHandler = new CloudHandler(te);
-		
-		socketHandler.setConnecting(true);
 		String destUri = "wss://api-stream.littlebitscloud.cc/primus/?access_token=" + te.getAuth();
-		SslContextFactory sslContextFactory = new SslContextFactory();
-		WebSocketClient client = new WebSocketClient(sslContextFactory);
+		SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		
 		try {
-			client.start();
-			URI echoUri = new URI(destUri);
-			ClientUpgradeRequest request = new ClientUpgradeRequest();
-			client.connect(socketHandler, echoUri, request);
+			SSLContext ssl = SSLContext.getDefault();
+			DefaultSSLWebSocketClientFactory socketFactory = new DefaultSSLWebSocketClientFactory(ssl);
+			HashMap<String, String> headers = new HashMap<String, String>();
+			headers.put("User-Agent", "bitCraft-0.1.4");
+			
+			socketHandler = new CloudHandler(new URI(destUri), headers, te);
+			socketHandler.setWebSocketFactory(socketFactory);
+			socketHandler.setConnecting(true);
+			socketHandler.connect();
 		} 
 		catch (Throwable err) {
 			err.printStackTrace();

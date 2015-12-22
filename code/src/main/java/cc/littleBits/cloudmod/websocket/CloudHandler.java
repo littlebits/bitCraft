@@ -1,13 +1,13 @@
 package cc.littleBits.cloudmod.websocket;
 
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.StatusCode;
-import org.eclipse.jetty.websocket.api.WebSocketException;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_10;
+import org.java_websocket.handshake.ServerHandshake;
+
 import org.json.JSONObject;
 
 import cc.littleBits.cloudmod.CloudMod;
@@ -16,24 +16,23 @@ import cc.littleBits.cloudmod.tileentities.TileEntityCloud;
 import net.minecraft.block.Block;
 import net.minecraft.server.MinecraftServer;
 
-@WebSocket(maxTextMessageSize = 64 * 1024)
-public class CloudHandler {
-	protected Session session;
+public class CloudHandler extends WebSocketClient{
 	protected TileEntityCloud te;
 	protected boolean connectingFlag;
 	protected boolean isClosing = false;
+	protected static HashMap<String, String> header = new HashMap<String, String>();
 
-	public CloudHandler(TileEntityCloud t) {
-		super();
+	public CloudHandler(URI serverUri, Map<String, String> header, TileEntityCloud t) {
+		super(serverUri, new Draft_10(), header, 0);
 		te = t;
 	}
 	
-	@OnWebSocketClose
-	public void onClose(int statusCode, String reason) {
-		this.session = null;
+	@Override
+	public void onClose(int statusCode, String reason, boolean remote) {
         connectingFlag = false;
         try {
-        	te = CloudMod.cloudManager.getAgent(te).getTileEntity();
+        	te.setInputPower(0);
+			te.setPower(0);
         	Block block = MinecraftServer.getServer().worldServerForDimension(te.getDimension()).getBlock(te.xCoord, te.yCoord, te.zCoord);
         	if (block instanceof BlockCloud && !te.getDisabled()) {te.setConnected(3);}
         } catch (Throwable t) {
@@ -43,83 +42,79 @@ public class CloudHandler {
         isClosing = false; 
 	}
 	
-	@OnWebSocketConnect
-    public void onConnect(Session session) {
+	@Override
+    public void onOpen(ServerHandshake handshakedata) {
 		te = CloudMod.cloudManager.getAgent(te).getTileEntity();
-		this.session = session;
         connectingFlag = false;
-        session.getRemote().sendStringByFuture("{\"name\":\"subscribe\",\"args\":{\"device_id\":\"" + te.getDevID() + "\"}}");
+        this.send("{\"name\":\"subscribe\",\"args\":{\"device_id\":\"" + te.getDevID() + "\"}}");
 	}
 	
-	@OnWebSocketError
-    public void onError(Throwable t) {
-		te = CloudMod.cloudManager.getAgent(te).getTileEntity();
-		te.setPower(0);
-		t.printStackTrace();
-        connectingFlag = false;
+	@Override
+    public void onError(Exception ex) {
+		try {
+			te.setPower(0); 
+			ex.printStackTrace();
+			connectingFlag = false;
+		}
+		catch (Throwable t) {
+			//t.printStackTrace();
+			System.out.println("wse");
+		}
     }
 	
 	public void disconnect() {
 		isClosing = true;
-		if(session != null) {
-			session.close(StatusCode.NORMAL, "I'm done");
+		if(!te.getDirection()) {
+			this.sendPower(0);
+		}
+		if(!this.getConnection().isClosed()) {
+			this.close();
 		}
 		connectingFlag = false;
 	}
 	
 	public boolean isOpen() {
-		try {
-			if(session == null) {
-				return false;
-			}
-			return session.isOpen();
-		} catch (NullPointerException npe) {
-			npe.printStackTrace();
-			return false;
-		}
+		return !this.getConnection().isClosed();
 	}
 	
-	@OnWebSocketMessage
+	@Override
 	public void onMessage(String msg) {
-		te = CloudMod.cloudManager.getAgent(te).getTileEntity();
-		JSONObject res = new JSONObject(msg.replace("\\","").substring(1));
-		if(res.getString("type").equals("connection_change")) {
-			if(res.getInt("state") == 1 || res.getInt("state") == 0) {
-				te.setConnected(3);
-		 		te.setInputPower(0);
-		 	}
-	        else if(res.getInt("state") == 2)
-	        	{te.setConnected(1);}
+		try{
+			te = CloudMod.cloudManager.getAgent(te).getTileEntity();
+			JSONObject res = new JSONObject(msg.replace("\\","").substring(1));
+			if(res.getString("type").equals("connection_change")) {
+				if(res.getInt("state") == 0) {
+					te.setConnected(3);
+					te.setInputPower(0);
+				}
+				else if(res.getInt("state") == 2 || res.getInt("state") == 1)
+	        		{te.setConnected(1);}
 			
-			MinecraftServer.getServer().worldServerForDimension(te.getDimension()).markBlockForUpdate(te.xCoord, te.yCoord, te.zCoord);
-	    }
+				MinecraftServer.getServer().worldServerForDimension(te.getDimension()).markBlockForUpdate(te.xCoord, te.yCoord, te.zCoord);
+			}
 		
-		if(te.getDirection()) {	// If te is an input
-	        if(res.getString("type").equals("input")) {
-	        	int bitOut = (int)(Math.round(15*res.getInt("percent")/100.0));
-	        	te.setInputPower(bitOut);
-	        }
+			if(te.getDirection()) {	// If te is an input
+				if(res.getString("type").equals("input")) {
+					int bitOut = (int)(Math.round(15*res.getInt("percent")/100.0));
+					te.setInputPower(bitOut);
+				}
+			}
+		} catch(Throwable t) {
+			t.printStackTrace();
 		}
 	}
 	
 	public void keepAlive() {
-		session.getRemote().sendStringByFuture("Hi");
-	}
-	
-	public Session getSession() {
-		return session;
+		this.send("Hi");
 	}
 	
 	public void sendPower(int power) {
 		te = CloudMod.cloudManager.getAgent(te).getTileEntity();
 		try {
-			session.getRemote().sendStringByFuture("{\"name\":\"output\",\"args\":{\"device_id\":\"" + te.getDevID() + "\",\"duration_ms\": -1, \"percent\": " + Integer.toString(power) + "}}");
+			this.send("{\"name\":\"output\",\"args\":{\"device_id\":\"" + te.getDevID() + "\",\"duration_ms\": -1, \"percent\": " + Integer.toString(power) + "}}");
 		} 
-		catch (WebSocketException wse)
+		catch (Throwable t)
 		{System.out.println("wse");}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public boolean isConnecting() {

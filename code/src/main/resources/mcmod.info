@@ -3,7 +3,7 @@
         "modid": "lbcm",
         "name": "bitCraft",
         "description": "Brings redstone into the physical world using littleBits",
-        "version": "${version}",
+        "version": "0.1.4",
         "mcversion": "${mcversion}",
         "url": "http://littlebits.cc",
         "updateUrl": "http://littlebits.cc",
