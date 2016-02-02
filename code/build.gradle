@@ -87,3 +87,8 @@ jar {
             'Class-Path': configurations.external.files.collect { it.name }.join(' ')
     )
 }
+
+task wrapper(type: Wrapper, group: "Build Setup") {
+  description 'Installs the Gradle Wrapper into your project.'
+  distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleWrapperVersion}-bin.zip"
+}
